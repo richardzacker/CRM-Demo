@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Raimak CRM · Demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;700;900&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box;}
+  :root{
+    --bg:#F4F7FC;--sidebar:#0E2347;--card:#FFFFFF;--border:#D1DFF0;
+    --cyan:#0284C7;--green:#059669;--amber:#D97706;--red:#DC2626;
+    --text:#0F1E36;--muted:#5A7A9F;--active:#1A3A6E;
+  }
+  body{font-family:'Inter','Segoe UI',sans-serif;background:var(--bg);color:var(--text);display:flex;height:100vh;overflow:hidden;font-size:13px;}
+  .mono{font-family:'JetBrains Mono','Fira Code',monospace;}
+
+  /* SIDEBAR */
+  .sidebar{width:210px;background:var(--sidebar);border-right:1px solid #1A3A6B;display:flex;flex-direction:column;flex-shrink:0;}
+  .sidebar-logo{padding:18px 16px 14px;border-bottom:1px solid #1A3A6B;}
+  .logo-icon{width:34px;height:34px;border-radius:6px;background:#22D3EE22;border:1px solid #22D3EE55;display:flex;align-items:center;justify-content:center;}
+  .logo-text{font-family:'JetBrains Mono',monospace;font-weight:900;font-size:13px;color:#fff;letter-spacing:2px;}
+  .logo-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:#93C5DE;letter-spacing:1px;}
+  .sidebar-nav{padding:10px 8px;flex:1;overflow-y:auto;}
+  .nav-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:#4A6A8F;letter-spacing:2px;text-transform:uppercase;padding:0 8px 8px;display:block;}
+  .nav-item{display:flex;align-items:center;gap:10;padding:8px 10px;border-radius:4px;cursor:pointer;color:#B8D4F0;transition:background .15s;}
+  .nav-item:hover{background:#132F5A;}
+  .nav-item.active{background:var(--active);color:#fff;}
+  .nav-item .icon{font-family:'JetBrains Mono',monospace;font-size:11px;width:16px;}
+  .nav-item .lbl{font-size:12px;flex:1;}
+  .nav-badge{background:#22D3EE22;color:#38BDF8;border-radius:10px;padding:1px 7px;font-family:'JetBrains Mono',monospace;font-size:9px;}
+  .lob-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+  .sidebar-user{padding:12px;border-top:1px solid #1A3A6B;display:flex;align-items:center;gap:10;}
+  .user-avatar{width:28px;height:28px;border-radius:50%;background:#1A3A6E;border:1px solid #2A5298;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-weight:700;font-size:11px;color:#67E8F9;flex-shrink:0;}
+
+  /* MAIN */
+  .main{flex:1;display:flex;overflow:hidden;}
+  .view{flex:1;overflow:auto;display:none;}
+  .view.active{display:flex;flex-direction:column;}
+
+  /* PAGE HEADER */
+  .page-header{padding:14px 20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0;}
+  .page-title{font-family:'JetBrains Mono',monospace;font-weight:900;font-size:16px;letter-spacing:2px;text-transform:uppercase;}
+  .page-sub{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--cyan);margin-top:3px;letter-spacing:1px;}
+
+  /* BUTTONS */
+  .btn{background:var(--cyan);border:none;border-radius:4px;color:#fff;padding:7px 14px;font-weight:700;font-size:11px;cursor:pointer;font-family:'JetBrains Mono',monospace;letter-spacing:1px;white-space:nowrap;}
+  .btn:hover{background:#0369A1;}
+  .btn-sm{padding:4px 10px;font-size:10px;}
+
+  /* CARDS */
+  .card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:16px;position:relative;overflow:hidden;}
+  .card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--top-color,var(--cyan));}
+  .card-label{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:10px;}
+
+  /* METRIC CARDS */
+  .metrics-grid{display:grid;gap:12px;}
+  .metric-card{background:var(--card);border:1px solid var(--border);border-radius:6px;padding:14px 16px;position:relative;overflow:hidden;}
+  .metric-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--mc,var(--cyan));}
+  .metric-val{font-family:'JetBrains Mono',monospace;font-weight:900;font-size:22px;margin:4px 0;}
+  .metric-lbl{font-size:11px;color:var(--muted);font-weight:500;}
+  .metric-sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-top:4px;}
+
+  /* TABLE */
+  .table{width:100%;border-collapse:collapse;}
+  .table th{font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;padding:8px 16px;text-align:left;border-bottom:1px solid var(--border);background:#F8FAFD;}
+  .table td{padding:10px 16px;border-bottom:1px solid var(--border);font-size:12px;}
+  .table tr:hover td{background:#F8FAFD;cursor:pointer;}
+  .table tr:last-child td{border-bottom:none;}
+
+  /* BADGES */
+  .badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.5px;}
+  .badge-dot{width:4px;height:4px;border-radius:50%;}
+
+  /* STATUS BADGES */
+  .status-installed{background:#D1FAE5;color:#059669;}
+  .status-scheduled{background:#DBEAFE;color:#0284C7;}
+  .status-pending{background:#FEF3C7;color:#D97706;}
+  .status-cancelled{background:#FEE2E2;color:#DC2626;}
+
+  /* STAGE BADGES */
+  .stage-active{background:#D1FAE5;color:#059669;}
+  .stage-negotiate{background:#FEF3C7;color:#D97706;}
+  .stage-propose{background:#DBEAFE;color:#0284C7;}
+  .stage-qualify{background:#F1F5F9;color:#64748B;}
+
+  /* KANBAN */
+  .kanban{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px 20px;flex:1;}
+  .kanban-col{background:var(--bg);border-radius:6px;padding:12px;}
+  .kanban-col-header{font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:900;letter-spacing:2px;margin-bottom:10px;}
+  .kanban-card{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:10px 12px;margin-bottom:8px;transition:box-shadow .15s;}
+  .kanban-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.08);}
+
+  /* DETAIL PANEL */
+  .detail-panel{width:380px;border-left:1px solid var(--border);display:flex;flex-direction:column;background:var(--card);}
+  .detail-hidden{display:none;}
+  .detail-header{padding:16px 20px;border-bottom:1px solid var(--border);}
+  .detail-tabs{display:flex;border-bottom:1px solid var(--border);}
+  .detail-tab{padding:10px 16px;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;transition:.15s;}
+  .detail-tab.active{color:var(--cyan);border-bottom-color:var(--cyan);}
+  .detail-body{flex:1;overflow-y:auto;padding:16px 20px;}
+
+  /* SEARCH */
+  .search-bar{width:100%;border:1px solid var(--border);border-radius:4px;padding:8px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--card);color:var(--text);outline:none;}
+  .search-bar:focus{border-color:var(--cyan);}
+
+  /* LOB DASHBOARD */
+  .lob-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;}
+  .lob-title-row{display:flex;align-items:center;gap:12px;}
+  .lob-big-dot{width:12px;height:12px;border-radius:50%;}
+
+  /* REPORTS TABS */
+  .report-tabs{display:flex;border-bottom:1px solid var(--border);padding:0 20px;}
+  .report-tab{padding:10px 14px;font-size:11px;font-weight:600;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;}
+  .report-tab.active{color:var(--cyan);border-bottom-color:var(--cyan);}
+
+  /* TIMELINE */
+  .timeline-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border);}
+  .timeline-dot{width:8px;height:8px;border-radius:50%;margin-top:4px;flex-shrink:0;}
+  .timeline-dot-cyan{background:var(--cyan);}
+  .timeline-dot-green{background:var(--green);}
+  .timeline-dot-amber{background:var(--amber);}
+
+  /* DEMO BANNER */
+  .demo-banner{position:fixed;top:0;left:0;right:0;z-index:9999;background:linear-gradient(90deg,#0E2347,#0284C7,#0E2347);color:#fff;text-align:center;padding:6px 0;font-family:'JetBrains Mono',monospace;font-size:10px;letter-spacing:2px;}
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar{width:4px;}
+  ::-webkit-scrollbar-track{background:transparent;}
+  ::-webkit-scrollbar-thumb{background:#D1DFF0;border-radius:2px;}
+
+  .row-count{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);padding:10px 16px;}
+  .empty-state{padding:40px;text-align:center;color:var(--muted);font-size:12px;}
+
+  /* CHART CONTAINER */
+  .chart-wrap{position:relative;height:200px;}
+</style>
+</head>
+<body>
+
+<div class="demo-banner">// DEMO MODE · RAIMAK CRM V2.0 · SAMPLE DATA ONLY</div>
+<div style="height:28px;flex-shrink:0;width:100%;position:fixed;top:0;left:0;right:0;z-index:9998;"></div>
+<div style="display:flex;height:100vh;padding-top:28px;width:100%;overflow:hidden;">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="sidebar-logo">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div class="logo-icon"><span style="font-family:'JetBrains Mono',monospace;font-weight:900;font-size:14px;color:#38BDF8;">R</span></div>
+      <div>
+        <div class="logo-text">RAIMAK</div>
+        <div class="logo-sub">CRM · V2.0</div>
+      </div>
+    </div>
+  </div>
+  <div class="sidebar-nav">
+    <span class="nav-label">Navigation</span>
+    <div class="nav-item active" onclick="showView('accounts')">
+      <span class="icon mono">▣</span><span class="lbl">Accounts</span>
+    </div>
+    <div class="nav-item" onclick="showView('pipeline')">
+      <span class="icon mono">◈</span><span class="lbl">Pipeline</span>
+      <span class="nav-badge">8</span>
+    </div>
+    <div class="nav-item" onclick="showView('orders')">
+      <span class="icon mono">◉</span><span class="lbl">Orders</span>
+      <span class="nav-badge">5</span>
+    </div>
+    <div class="nav-item" onclick="showView('reports')">
+      <span class="icon mono">◇</span><span class="lbl">Reports</span>
+    </div>
+    <div class="nav-item" onclick="showView('activity')">
+      <span class="icon mono">≡</span><span class="lbl">Activity Log</span>
+    </div>
+    <span class="nav-label" style="margin-top:8px;">Lines of Business</span>
+    <div class="nav-item" onclick="showView('lob-frontier')">
+      <span class="lob-dot" style="background:#0284C7;box-shadow:0 0 6px #0284C7;"></span>
+      <span class="lbl" style="font-size:12px;">Frontier</span>
+    </div>
+    <div class="nav-item" onclick="showView('lob-kinetic')">
+      <span class="lob-dot" style="background:#059669;box-shadow:0 0 6px #059669;"></span>
+      <span class="lbl" style="font-size:12px;">Kinetic</span>
+    </div>
+    <div class="nav-item" onclick="showView('lob-verizon')">
+      <span class="lob-dot" style="background:#DC2626;box-shadow:0 0 6px #DC2626;"></span>
+      <span class="lbl" style="font-size:12px;">Verizon Mobile</span>
+    </div>
+  </div>
+  <div class="sidebar-user">
+    <div class="user-avatar">RZ</div>
+    <div style="overflow:hidden;">
+      <div style="font-size:11px;font-weight:600;color:#F0F6FF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Richard Zacker</div>
+      <div style="font-size:10px;color:#93C5DE;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">RichardZacker@raimak.com</div>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN CONTENT -->
+<div class="main">
+
+  <!-- ACCOUNTS VIEW -->
+  <div id="view-accounts" class="view active" style="flex-direction:row;">
+    <div id="accounts-list" style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+      <div class="page-header">
+        <div>
+          <div class="page-title mono">Accounts</div>
+          <div class="page-sub">// MY ACTIVE · 8 RECORDS</div>
+        </div>
+        <button class="btn" onclick="alert('Demo mode — add account disabled')">+ ADD ACCOUNT</button>
+      </div>
+      <div style="padding:10px 16px;border-bottom:1px solid var(--border);">
+        <input class="search-bar" placeholder="// filter by keyword..." oninput="filterAccounts(this.value)"/>
+      </div>
+      <div style="overflow-y:auto;flex:1;">
+        <table class="table" id="accounts-table">
+          <thead>
+            <tr>
+              <th>Account Name</th><th>Phone</th><th>City</th><th>Primary Contact</th><th>Lines of Business</th>
+            </tr>
+          </thead>
+          <tbody id="accounts-tbody"></tbody>
+        </table>
+        <div class="row-count" id="accounts-count">Rows: 8</div>
+      </div>
+    </div>
+    <!-- DETAIL PANEL -->
+    <div id="detail-panel" class="detail-panel detail-hidden">
+      <div class="detail-header">
+        <div style="display:flex;align-items:center;justify-content:space-between;">
+          <div>
+            <div style="font-weight:800;font-size:14px;" id="detail-name"></div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;" id="detail-sub"></div>
+          </div>
+          <button onclick="closeDetail()" style="background:none;border:none;font-size:18px;cursor:pointer;color:var(--muted);">×</button>
+        </div>
+        <div id="detail-lobs" style="margin-top:8px;display:flex;gap:6px;flex-wrap:wrap;"></div>
+      </div>
+      <div class="detail-tabs">
+        <div class="detail-tab active" onclick="showDetailTab('summary')">Summary</div>
+        <div class="detail-tab" onclick="showDetailTab('contracts')">Contracts</div>
+        <div class="detail-tab" onclick="showDetailTab('orders')">Orders</div>
+        <div class="detail-tab" onclick="showDetailTab('timeline')">Timeline</div>
+      </div>
+      <div class="detail-body" id="detail-body"></div>
+    </div>
+  </div>
+
+  <!-- PIPELINE VIEW -->
+  <div id="view-pipeline" class="view">
+    <div class="page-header">
+      <div>
+        <div class="page-title mono">Pipeline</div>
+        <div class="page-sub">// KANBAN · 8 OPEN OPPORTUNITIES</div>
+      </div>
+      <button class="btn" onclick="alert('Demo mode')">+ ADD CONTRACT</button>
+    </div>
+    <div class="kanban" id="kanban-board"></div>
+  </div>
+
+  <!-- ORDERS VIEW -->
+  <div id="view-orders" class="view">
+    <div class="page-header">
+      <div>
+        <div class="page-title mono">Orders</div>
+        <div class="page-sub">// INSTALL TRACKING · 12 TOTAL</div>
+      </div>
+      <button class="btn" onclick="alert('Demo mode')">+ ADD ORDER</button>
+    </div>
+    <div style="overflow-y:auto;flex:1;">
+      <table class="table">
+        <thead><tr><th>Account</th><th>Status</th><th>Install Date</th><th>Agent</th><th>Value</th><th>LOB</th></tr></thead>
+        <tbody id="orders-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- REPORTS VIEW -->
+  <div id="view-reports" class="view">
+    <div class="page-header">
+      <div class="page-title mono">Reports</div>
+      <div class="page-sub" style="margin-top:3px;">// ANALYTICS · Q1 2026</div>
+    </div>
+    <div class="report-tabs">
+      <div class="report-tab active" onclick="showReportTab('sales')">Agent Sales</div>
+      <div class="report-tab" onclick="showReportTab('installs')">Install Dates</div>
+      <div class="report-tab" onclick="showReportTab('status')">Order Status</div>
+      <div class="report-tab" onclick="showReportTab('revenue')">Revenue</div>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:20px;" id="reports-content"></div>
+  </div>
+
+  <!-- ACTIVITY LOG -->
+  <div id="view-activity" class="view">
+    <div class="page-header">
+      <div class="page-title mono">Activity Log</div>
+      <div class="page-sub" style="margin-top:3px;">// RECENT ACTIONS</div>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding:0 20px;" id="activity-list"></div>
+  </div>
+
+  <!-- LOB FRONTIER -->
+  <div id="view-lob-frontier" class="view">
+    <div style="flex:1;overflow:auto;padding:24px;" id="lob-frontier-content"></div>
+  </div>
+
+  <!-- LOB KINETIC -->
+  <div id="view-lob-kinetic" class="view">
+    <div style="flex:1;overflow:auto;padding:24px;" id="lob-kinetic-content"></div>
+  </div>
+
+  <!-- LOB VERIZON -->
+  <div id="view-lob-verizon" class="view">
+    <div style="flex:1;overflow:auto;padding:24px;" id="lob-verizon-content"></div>
+  </div>
+
+</div><!-- end main -->
+</div><!-- end flex wrapper -->
+
+<script>
+// ── DEMO DATA ──────────────────────────────────────────────────────────────
+const ACCOUNTS = [
+  { id:1, name:"City of Springfield", contact:"Dana Reyes", email:"dana@springfieldil.gov", phone:"217-555-0182", city:"Springfield, IL", revenue:485000, employees:220, lob:["Frontier","Verizon Mobile"],
+    contracts:[
+      {id:"c1",title:"Fiber Network Expansion",value:285000,stage:"Active",close:"2025-11-30",lob:"Frontier"},
+      {id:"c2",title:"Mobile Fleet Plan",value:200000,stage:"Negotiate",close:"2026-04-15",lob:"Verizon Mobile"},
+    ],
+    orders:[
+      {id:"o1",title:"Fiber Install Phase 1",status:"Installed",installDate:"2025-10-14",agent:"Jordan Davis",value:95000,lob:"Frontier"},
+      {id:"o2",title:"Mobile Devices Batch A",status:"Scheduled",installDate:"2026-03-20",agent:"Priya Nair",value:48000,lob:"Verizon Mobile"},
+    ],
+    timeline:[
+      {date:"Mar 5 2026",event:"Contract renewed for FY2026",type:"green"},
+      {date:"Feb 18 2026",event:"On-site review completed",type:"cyan"},
+      {date:"Jan 10 2026",event:"Quarterly check-in call",type:"amber"},
+    ]
+  },
+  { id:2, name:"Hawthorne Logistics", contact:"Marcus Bell", email:"mbell@hawthorne.com", phone:"312-555-0047", city:"Chicago, IL", revenue:612000, employees:480, lob:["Kinetic","Frontier"],
+    contracts:[
+      {id:"c3",title:"SD-WAN Deployment",value:340000,stage:"Active",close:"2025-09-01",lob:"Kinetic"},
+      {id:"c4",title:"Voice & Data Bundle",value:272000,stage:"Propose",close:"2026-05-01",lob:"Frontier"},
+    ],
+    orders:[
+      {id:"o3",title:"SD-WAN Phase 1",status:"Installed",installDate:"2025-08-22",agent:"Marcus Bell",value:120000,lob:"Kinetic"},
+      {id:"o4",title:"SD-WAN Phase 2",status:"Scheduled",installDate:"2026-04-10",agent:"Marcus Bell",value:110000,lob:"Kinetic"},
+    ],
+    timeline:[
+      {date:"Mar 1 2026",event:"Upsell opportunity identified",type:"amber"},
+      {date:"Feb 5 2026",event:"Phase 2 scope approved",type:"green"},
+    ]
+  },
+  { id:3, name:"Meridian Health Group", contact:"Priya Nair", email:"pnair@meridianhealth.org", phone:"314-555-0099", city:"St. Louis, MO", revenue:920000, employees:1100, lob:["Verizon Mobile","Kinetic"],
+    contracts:[
+      {id:"c5",title:"Enterprise Mobile Plan",value:520000,stage:"Active",close:"2025-12-31",lob:"Verizon Mobile"},
+      {id:"c6",title:"Data Center Connectivity",value:400000,stage:"Negotiate",close:"2026-06-30",lob:"Kinetic"},
+    ],
+    orders:[
+      {id:"o5",title:"Device Refresh Q4",status:"Installed",installDate:"2025-11-18",agent:"Priya Nair",value:180000,lob:"Verizon Mobile"},
+      {id:"o6",title:"Connectivity Upgrade",status:"Pending",installDate:"TBD",agent:"Dana Reyes",value:95000,lob:"Kinetic"},
+    ],
+    timeline:[
+      {date:"Mar 7 2026",event:"Renewal discussion initiated",type:"cyan"},
+      {date:"Jan 22 2026",event:"Executive QBR completed",type:"green"},
+    ]
+  },
+  { id:4, name:"TerraVerde Construction", contact:"Luis Garza", email:"lgarza@terraverde.com", phone:"816-555-0213", city:"Kansas City, MO", revenue:295000, employees:175, lob:["Frontier"],
+    contracts:[
+      {id:"c7",title:"Job Site Connectivity",value:175000,stage:"Qualify",close:"2026-07-01",lob:"Frontier"},
+      {id:"c8",title:"Cloud Backup Services",value:120000,stage:"Propose",close:"2026-05-15",lob:"Frontier"},
+    ],
+    orders:[
+      {id:"o7",title:"Temp Tower Install",status:"Pending",installDate:"2026-04-01",agent:"Luis Garza",value:45000,lob:"Frontier"},
+    ],
+    timeline:[
+      {date:"Feb 28 2026",event:"RFP submitted",type:"cyan"},
+      {date:"Feb 10 2026",event:"Initial discovery call",type:"amber"},
+    ]
+  },
+  { id:5, name:"Ozark Regional Bank", contact:"Sarah Chen", email:"schen@ozarkbank.com", phone:"573-555-0331", city:"Columbia, MO", revenue:750000, employees:310, lob:["Verizon Mobile","Frontier"],
+    contracts:[
+      {id:"c9",title:"Branch Network Modernization",value:430000,stage:"Active",close:"2026-01-31",lob:"Frontier"},
+      {id:"c10",title:"Executive Mobile Plan",value:320000,stage:"Active",close:"2026-03-31",lob:"Verizon Mobile"},
+    ],
+    orders:[
+      {id:"o8",title:"Branch Fiber Cutover",status:"Installed",installDate:"2025-12-05",agent:"Jordan Davis",value:215000,lob:"Frontier"},
+      {id:"o9",title:"Mobile Rollout Phase 1",status:"Installed",installDate:"2026-01-14",agent:"Priya Nair",value:110000,lob:"Verizon Mobile"},
+    ],
+    timeline:[
+      {date:"Mar 3 2026",event:"Phase 2 proposal sent",type:"cyan"},
+      {date:"Feb 14 2026",event:"Phase 1 sign-off received",type:"green"},
+    ]
+  },
+  { id:6, name:"Pinnacle Manufacturing", contact:"Derek Walsh", email:"dwalsh@pinnaclemfg.com", phone:"618-555-0087", city:"Belleville, IL", revenue:540000, employees:620, lob:["Kinetic"],
+    contracts:[
+      {id:"c11",title:"Plant IoT Connectivity",value:310000,stage:"Negotiate",close:"2026-04-30",lob:"Kinetic"},
+      {id:"c12",title:"Redundant WAN",value:230000,stage:"Propose",close:"2026-06-01",lob:"Kinetic"},
+    ],
+    orders:[
+      {id:"o10",title:"IoT Sensor Network",status:"Scheduled",installDate:"2026-05-10",agent:"Marcus Bell",value:130000,lob:"Kinetic"},
+    ],
+    timeline:[
+      {date:"Mar 6 2026",event:"Technical demo scheduled",type:"amber"},
+      {date:"Feb 20 2026",event:"Security review passed",type:"green"},
+    ]
+  },
+  { id:7, name:"Gateway Transit Authority", contact:"Angela Moore", email:"amoore@gatewaytransit.org", phone:"314-555-0445", city:"St. Louis, MO", revenue:880000, employees:950, lob:["Verizon Mobile","Frontier","Kinetic"],
+    contracts:[
+      {id:"c13",title:"Fleet Tracking Plan",value:480000,stage:"Active",close:"2026-02-28",lob:"Verizon Mobile"},
+      {id:"c14",title:"Station Wifi Network",value:250000,stage:"Active",close:"2026-01-15",lob:"Frontier"},
+      {id:"c15",title:"Operations Center WAN",value:150000,stage:"Qualify",close:"2026-08-01",lob:"Kinetic"},
+    ],
+    orders:[
+      {id:"o11",title:"Fleet Device Deploy",status:"Installed",installDate:"2025-11-30",agent:"Jordan Davis",value:220000,lob:"Verizon Mobile"},
+      {id:"o12",title:"Station Wifi Phase 1",status:"Installed",installDate:"2025-12-20",agent:"Dana Reyes",value:125000,lob:"Frontier"},
+    ],
+    timeline:[
+      {date:"Mar 8 2026",event:"Annual review meeting set",type:"cyan"},
+      {date:"Jan 30 2026",event:"Contract auto-renewed",type:"green"},
+    ]
+  },
+  { id:8, name:"NovaTech Solutions", contact:"James Park", email:"jpark@novatech.io", phone:"312-555-0598", city:"Chicago, IL", revenue:410000, employees:195, lob:["Kinetic","Verizon Mobile"],
+    contracts:[
+      {id:"c16",title:"Cloud Connectivity Suite",value:230000,stage:"Propose",close:"2026-05-30",lob:"Kinetic"},
+      {id:"c17",title:"Dev Team Mobile Plan",value:180000,stage:"Qualify",close:"2026-07-15",lob:"Verizon Mobile"},
+    ],
+    orders:[
+      {id:"o13",title:"Fiber Install HQ",status:"Pending",installDate:"2026-06-01",agent:"Luis Garza",value:85000,lob:"Kinetic"},
+    ],
+    timeline:[
+      {date:"Mar 4 2026",event:"Proof of concept approved",type:"green"},
+      {date:"Feb 25 2026",event:"Technical workshop held",type:"amber"},
+    ]
+  },
+];
+
+const AGENTS = [
+  {name:"Jordan Davis",   sales:24, revenue:198000, installs:21, initials:"JD"},
+  {name:"Priya Nair",     sales:31, revenue:267000, installs:28, initials:"PN"},
+  {name:"Marcus Bell",    sales:18, revenue:142000, installs:16, initials:"MB"},
+  {name:"Dana Reyes",     sales:22, revenue:185000, installs:20, initials:"DR"},
+  {name:"Luis Garza",     sales:12, revenue:96000,  installs:10, initials:"LG"},
+];
+
+const LOB_CONFIG = {
+  Frontier:         { color:"#0284C7", bg:"#E0F2FE", border:"#BAE6FD" },
+  Kinetic:          { color:"#059669", bg:"#D1FAE5", border:"#A7F3D0" },
+  "Verizon Mobile": { color:"#DC2626", bg:"#FEE2E2", border:"#FECACA" },
+};
+
+const STAGE_COLORS = { Active:"#059669", Negotiate:"#D97706", Negotiation:"#D97706", Propose:"#0284C7", Qualify:"#64748B" };
+const STATUS_CLASS = { Installed:"status-installed", Scheduled:"status-scheduled", Pending:"status-pending", Cancelled:"status-cancelled" };
+
+let currentView = "accounts";
+let selectedAccount = null;
+let currentDetailTab = "summary";
+let currentReportTab = "sales";
+let salesChart = null, installChart = null, statusChart = null;
+
+// ── VIEW SWITCHING ─────────────────────────────────────────────────────────
+function showView(v) {
+  document.querySelectorAll(".view").forEach(el => el.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(el => el.classList.remove("active"));
+  document.getElementById("view-"+v).classList.add("active");
+  event.currentTarget.classList.add("active");
+  currentView = v;
+  if (v === "reports") renderReports();
+  if (v === "activity") renderActivity();
+  if (v === "lob-frontier") renderLOB("Frontier", "lob-frontier-content");
+  if (v === "lob-kinetic") renderLOB("Kinetic", "lob-kinetic-content");
+  if (v === "lob-verizon") renderLOB("Verizon Mobile", "lob-verizon-content");
+}
+
+// ── ACCOUNTS ───────────────────────────────────────────────────────────────
+function lobBadge(name) {
+  const c = LOB_CONFIG[name];
+  if (!c) return "";
+  return `<span class="badge" style="background:${c.bg};color:${c.color};border:1px solid ${c.border};">
+    <span class="badge-dot" style="background:${c.color};"></span>${name}
+  </span>`;
+}
+
+function renderAccounts(accounts) {
+  const tbody = document.getElementById("accounts-tbody");
+  tbody.innerHTML = accounts.map(a => `
+    <tr onclick="selectAccount(${a.id})">
+      <td><span style="font-weight:600;color:#0284C7;">${a.name}</span></td>
+      <td>${a.phone}</td>
+      <td>${a.city}</td>
+      <td>${a.contact}</td>
+      <td style="display:flex;gap:4px;flex-wrap:wrap;">${a.lob.map(lobBadge).join("")}</td>
+    </tr>`).join("");
+  document.getElementById("accounts-count").textContent = `Rows: ${accounts.length}`;
+}
+
+function filterAccounts(q) {
+  const filtered = ACCOUNTS.filter(a =>
+    a.name.toLowerCase().includes(q.toLowerCase()) ||
+    a.contact.toLowerCase().includes(q.toLowerCase()) ||
+    a.city.toLowerCase().includes(q.toLowerCase())
+  );
+  renderAccounts(filtered);
+}
+
+function selectAccount(id) {
+  selectedAccount = ACCOUNTS.find(a => a.id === id);
+  const p = document.getElementById("detail-panel");
+  p.classList.remove("detail-hidden");
+  document.getElementById("accounts-list").style.width = "calc(100% - 380px)";
+  document.getElementById("detail-name").textContent = selectedAccount.name;
+  document.getElementById("detail-sub").textContent = `${selectedAccount.contact} · ${selectedAccount.city}`;
+  document.getElementById("detail-lobs").innerHTML = selectedAccount.lob.map(lobBadge).join("");
+  showDetailTab("summary");
+}
+
+function closeDetail() {
+  document.getElementById("detail-panel").classList.add("detail-hidden");
+  document.getElementById("accounts-list").style.width = "100%";
+  selectedAccount = null;
+}
+
+function showDetailTab(tab) {
+  currentDetailTab = tab;
+  document.querySelectorAll(".detail-tab").forEach(t => t.classList.remove("active"));
+  event && event.currentTarget && event.currentTarget.classList.add("active");
+  if (!event) document.querySelectorAll(".detail-tab")[["summary","contracts","orders","timeline"].indexOf(tab)].classList.add("active");
+  const a = selectedAccount;
+  const body = document.getElementById("detail-body");
+
+  if (tab === "summary") {
+    body.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;">
+        <div class="metric-card" style="--mc:#0284C7"><div class="metric-lbl">Annual Revenue</div><div class="metric-val mono" style="font-size:16px;color:#0284C7;">$${a.revenue.toLocaleString()}</div></div>
+        <div class="metric-card" style="--mc:#059669"><div class="metric-lbl">Employees</div><div class="metric-val mono" style="font-size:16px;color:#059669;">${a.employees}</div></div>
+      </div>
+      <div style="margin-bottom:12px;"><div class="card-label">Contact</div>
+        <div style="font-size:12px;"><div style="font-weight:600;">${a.contact}</div>
+        <div style="color:var(--muted);">${a.email}</div><div style="color:var(--muted);">${a.phone}</div></div>
+      </div>
+      <div><div class="card-label">Open Pipeline</div>
+        <div class="mono" style="font-size:18px;font-weight:900;color:#D97706;">$${a.contracts.filter(c=>c.stage!=="Active").reduce((s,c)=>s+c.value,0).toLocaleString()}</div>
+      </div>`;
+  } else if (tab === "contracts") {
+    body.innerHTML = a.contracts.length === 0 ? `<div class="empty-state">No contracts yet</div>` :
+      a.contracts.map(c => `
+        <div style="padding:12px 0;border-bottom:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+            <div style="font-weight:600;font-size:12px;">${c.title}</div>
+            <span class="badge stage-${c.stage.toLowerCase().replace("negotiation","negotiate")}">${c.stage}</span>
+          </div>
+          <div style="display:flex;gap:16px;margin-top:6px;">
+            <span class="mono" style="font-size:11px;color:#059669;">$${c.value.toLocaleString()}</span>
+            <span style="font-size:11px;color:var(--muted);">Close: ${c.close}</span>
+            <span style="font-size:11px;">${lobBadge(c.lob)}</span>
+          </div>
+        </div>`).join("");
+  } else if (tab === "orders") {
+    body.innerHTML = a.orders.length === 0 ? `<div class="empty-state">No orders yet</div>` :
+      a.orders.map(o => `
+        <div style="padding:12px 0;border-bottom:1px solid var(--border);">
+          <div style="display:flex;justify-content:space-between;">
+            <div style="font-weight:600;font-size:12px;">${o.title}</div>
+            <span class="badge ${STATUS_CLASS[o.status]}">${o.status}</span>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:6px;font-size:11px;color:var(--muted);">
+            <span>${o.installDate}</span><span>${o.agent}</span>
+            <span class="mono" style="color:#059669;">$${o.value.toLocaleString()}</span>
+          </div>
+        </div>`).join("");
+  } else if (tab === "timeline") {
+    body.innerHTML = a.timeline.map(t => `
+      <div class="timeline-item">
+        <div class="timeline-dot timeline-dot-${t.type}" style="margin-top:4px;"></div>
+        <div><div style="font-size:12px;">${t.event}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace;">${t.date}</div>
+        </div>
+      </div>`).join("");
+  }
+}
+
+// ── PIPELINE (KANBAN) ──────────────────────────────────────────────────────
+function renderPipeline() {
+  const allContracts = ACCOUNTS.flatMap(a => a.contracts.map(c => ({...c, accountName: a.name})));
+  const stages = ["Qualify","Propose","Negotiate","Active"];
+  const stageColors = { Active:"#059669", Negotiate:"#D97706", Propose:"#0284C7", Qualify:"#64748B" };
+  document.getElementById("kanban-board").innerHTML = stages.map(stage => {
+    const cols = allContracts.filter(c => c.stage === stage || c.stage === stage.replace("Negotiate","Negotiation"));
+    return `<div class="kanban-col">
+      <div class="kanban-col-header" style="color:${stageColors[stage]};">${stage.toUpperCase()} <span style="color:var(--muted);font-weight:400;">(${cols.length})</span></div>
+      ${cols.map(c => `
+        <div class="kanban-card">
+          <div style="font-weight:600;font-size:12px;margin-bottom:4px;">${c.accountName}</div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">${c.title}</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <span class="mono" style="font-size:11px;color:#059669;font-weight:700;">$${c.value.toLocaleString()}</span>
+            ${lobBadge(c.lob)}
+          </div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px;font-family:'JetBrains Mono',monospace;">Close: ${c.close}</div>
+        </div>`).join("")}
+    </div>`;
+  }).join("");
+}
+
+// ── ORDERS ─────────────────────────────────────────────────────────────────
+function renderOrders() {
+  const allOrders = ACCOUNTS.flatMap(a => a.orders.map(o => ({...o, accountName: a.name})));
+  document.getElementById("orders-tbody").innerHTML = allOrders.map(o => `
+    <tr>
+      <td style="font-weight:600;">${o.accountName}</td>
+      <td><span class="badge ${STATUS_CLASS[o.status]}">${o.status}</span></td>
+      <td class="mono" style="font-size:11px;">${o.installDate}</td>
+      <td>${o.agent}</td>
+      <td class="mono" style="color:#059669;">$${o.value.toLocaleString()}</td>
+      <td>${lobBadge(o.lob)}</td>
+    </tr>`).join("");
+}
+
+// ── REPORTS ────────────────────────────────────────────────────────────────
+function showReportTab(tab) {
+  currentReportTab = tab;
+  document.querySelectorAll(".report-tab").forEach(t => t.classList.remove("active"));
+  event.currentTarget.classList.add("active");
+  renderReports();
+}
+
+function renderReports() {
+  const c = document.getElementById("reports-content");
+  const allOrders = ACCOUNTS.flatMap(a => a.orders);
+  const allContracts = ACCOUNTS.flatMap(a => a.contracts);
+
+  if (currentReportTab === "sales") {
+    const topAgent = [...AGENTS].sort((a,b)=>b.sales-a.sales)[0];
+    c.innerHTML = `
+      <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+        <div class="metric-card" style="--mc:#0284C7"><div class="metric-lbl">Total Sales</div><div class="metric-val mono">${AGENTS.reduce((s,a)=>s+a.sales,0)}</div><div class="metric-sub">All agents combined</div></div>
+        <div class="metric-card" style="--mc:#059669"><div class="metric-lbl">Total Revenue</div><div class="metric-val mono" style="font-size:18px;">$${AGENTS.reduce((s,a)=>s+a.revenue,0).toLocaleString()}</div><div class="metric-sub">Closed contracts</div></div>
+        <div class="metric-card" style="--mc:#D97706"><div class="metric-lbl">Top Agent</div><div class="metric-val mono" style="font-size:18px;">${topAgent.name.split(" ")[0]}</div><div class="metric-sub">${topAgent.sales} sales this period</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card" style="--top-color:#0284C7">
+          <div class="card-label">Sales by Agent</div>
+          <div class="chart-wrap"><canvas id="salesChart"></canvas></div>
+        </div>
+        <div class="card" style="--top-color:#059669">
+          <div class="card-label">Agent Leaderboard</div>
+          ${[...AGENTS].sort((a,b)=>b.revenue-a.revenue).map((a,i)=>`
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+              <span class="mono" style="font-size:10px;color:var(--muted);width:16px;">${i+1}</span>
+              <div style="width:26px;height:26px;border-radius:50%;background:#1A3A6E;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:700;color:#67E8F9;">${a.initials}</div>
+              <div style="flex:1"><div style="font-size:12px;font-weight:600;">${a.name}</div><div style="font-size:10px;color:var(--muted);">${a.sales} sales</div></div>
+              <div class="mono" style="font-size:11px;color:#059669;">$${a.revenue.toLocaleString()}</div>
+            </div>`).join("")}
+        </div>
+      </div>`;
+    setTimeout(() => {
+      const ctx = document.getElementById("salesChart");
+      if (ctx) new Chart(ctx, { type:"bar", data:{ labels:AGENTS.map(a=>a.name.split(" ")[0]), datasets:[{data:AGENTS.map(a=>a.sales),backgroundColor:"#0284C744",borderColor:"#0284C7",borderWidth:2,borderRadius:4}]}, options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:"#D1DFF044"}},x:{grid:{display:false}}}}});
+    },50);
+
+  } else if (currentReportTab === "installs") {
+    const installed = allOrders.filter(o=>o.status==="Installed").length;
+    const scheduled = allOrders.filter(o=>o.status==="Scheduled").length;
+    const pending = allOrders.filter(o=>o.status==="Pending").length;
+    c.innerHTML = `
+      <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+        <div class="metric-card" style="--mc:#059669"><div class="metric-lbl">Completed</div><div class="metric-val mono">${installed}</div><div class="metric-sub">Installed orders</div></div>
+        <div class="metric-card" style="--mc:#0284C7"><div class="metric-lbl">Scheduled</div><div class="metric-val mono">${scheduled}</div><div class="metric-sub">Upcoming installs</div></div>
+        <div class="metric-card" style="--mc:#D97706"><div class="metric-lbl">Pending</div><div class="metric-val mono">${pending}</div><div class="metric-sub">Awaiting scheduling</div></div>
+      </div>
+      <div class="card" style="--top-color:#059669">
+        <div class="card-label">Install Schedule</div>
+        ${allOrders.filter(o=>o.status!=="Cancelled").map(o=>`
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+            <div><div style="font-weight:600;font-size:12px;">${o.title}</div><div style="font-size:11px;color:var(--muted);">${o.agent}</div></div>
+            <div style="text-align:right;">
+              <span class="badge ${STATUS_CLASS[o.status]}">${o.status}</span>
+              <div class="mono" style="font-size:10px;color:var(--muted);margin-top:3px;">${o.installDate}</div>
+            </div>
+          </div>`).join("")}
+      </div>`;
+
+  } else if (currentReportTab === "status") {
+    const counts = {Installed:0,Scheduled:0,Pending:0,Cancelled:0};
+    allOrders.forEach(o => counts[o.status] = (counts[o.status]||0)+1);
+    c.innerHTML = `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="card" style="--top-color:#0284C7">
+          <div class="card-label">Order Status Breakdown</div>
+          <div class="chart-wrap"><canvas id="statusChart"></canvas></div>
+        </div>
+        <div class="card" style="--top-color:#059669">
+          <div class="card-label">By Status</div>
+          ${Object.entries(counts).map(([status,count])=>`
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);">
+              <span class="badge ${STATUS_CLASS[status]}">${status}</span>
+              <span class="mono" style="font-weight:700;">${count}</span>
+            </div>`).join("")}
+        </div>
+      </div>`;
+    setTimeout(() => {
+      const ctx = document.getElementById("statusChart");
+      if(ctx) new Chart(ctx,{type:"doughnut",data:{labels:Object.keys(counts),datasets:[{data:Object.values(counts),backgroundColor:["#059669","#0284C7","#D97706","#DC2626"],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:"bottom",labels:{font:{family:"JetBrains Mono",size:10},padding:12}}}}});
+    },50);
+
+  } else if (currentReportTab === "revenue") {
+    const totalRev = allContracts.filter(c=>c.stage==="Active").reduce((s,c)=>s+c.value,0);
+    const pipeline = allContracts.filter(c=>c.stage!=="Active").reduce((s,c)=>s+c.value,0);
+    const lobRevs = {};
+    Object.keys(LOB_CONFIG).forEach(l => {
+      lobRevs[l] = allContracts.filter(c=>c.lob===l&&c.stage==="Active").reduce((s,c)=>s+c.value,0);
+    });
+    c.innerHTML = `
+      <div class="metrics-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+        <div class="metric-card" style="--mc:#059669"><div class="metric-lbl">Active Revenue</div><div class="metric-val mono" style="font-size:16px;">$${totalRev.toLocaleString()}</div><div class="metric-sub">Closed contracts</div></div>
+        <div class="metric-card" style="--mc:#D97706"><div class="metric-lbl">Pipeline Value</div><div class="metric-val mono" style="font-size:16px;">$${pipeline.toLocaleString()}</div><div class="metric-sub">Open opportunities</div></div>
+        <div class="metric-card" style="--mc:#0284C7"><div class="metric-lbl">Total Accounts</div><div class="metric-val mono">${ACCOUNTS.length}</div><div class="metric-sub">Active accounts</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;">
+        ${Object.entries(lobRevs).map(([lob,rev])=>`
+          <div class="metric-card" style="--mc:${LOB_CONFIG[lob].color}">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+              <span style="width:6px;height:6px;border-radius:50%;background:${LOB_CONFIG[lob].color};"></span>
+              <span style="font-size:11px;font-weight:700;color:${LOB_CONFIG[lob].color};">${lob}</span>
+            </div>
+            <div class="mono" style="font-size:20px;font-weight:900;">$${rev.toLocaleString()}</div>
+            <div class="metric-sub">Active revenue</div>
+          </div>`).join("")}
+      </div>`;
+  }
+}
+
+// ── ACTIVITY LOG ───────────────────────────────────────────────────────────
+function renderActivity() {
+  const activities = [
+    {time:"Today 9:14 AM", action:"Contract renewed", detail:"Ozark Regional Bank · Frontier", type:"green"},
+    {time:"Today 8:45 AM", action:"New account added", detail:"NovaTech Solutions", type:"cyan"},
+    {time:"Yesterday 4:30 PM", action:"Install completed", detail:"Fleet Device Deploy · Gateway Transit", type:"green"},
+    {time:"Yesterday 2:15 PM", action:"Stage updated", detail:"Plant IoT Connectivity → Negotiate", type:"amber"},
+    {time:"Mar 7 2026", action:"QBR completed", detail:"Meridian Health Group", type:"cyan"},
+    {time:"Mar 6 2026", action:"Technical demo", detail:"Pinnacle Manufacturing scheduled", type:"amber"},
+    {time:"Mar 5 2026", action:"Contract renewed", detail:"City of Springfield · FY2026", type:"green"},
+    {time:"Mar 4 2026", action:"POC approved", detail:"NovaTech Solutions", type:"green"},
+    {time:"Mar 3 2026", action:"Phase 2 proposal sent", detail:"Ozark Regional Bank", type:"cyan"},
+    {time:"Mar 1 2026", action:"Upsell identified", detail:"Hawthorne Logistics · $272K opportunity", type:"amber"},
+  ];
+  document.getElementById("activity-list").innerHTML = activities.map(a=>`
+    <div class="timeline-item">
+      <div class="timeline-dot timeline-dot-${a.type}"></div>
+      <div>
+        <div style="font-size:12px;font-weight:600;">${a.action}</div>
+        <div style="font-size:11px;color:var(--muted);">${a.detail}</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:var(--muted);margin-top:2px;">${a.time}</div>
+      </div>
+    </div>`).join("");
+}
+
+// ── LOB DASHBOARD ──────────────────────────────────────────────────────────
+function renderLOB(lobName, containerId) {
+  const cfg = LOB_CONFIG[lobName];
+  const lobAccounts = ACCOUNTS.filter(a => a.lob.includes(lobName));
+  const lobContracts = lobAccounts.flatMap(a => a.contracts.filter(c=>c.lob===lobName).map(c=>({...c,accountName:a.name})));
+  const lobOrders = lobAccounts.flatMap(a => a.orders.filter(o=>o.lob===lobName).map(o=>({...o,accountName:a.name})));
+  const revenue = lobContracts.filter(c=>c.stage==="Active").reduce((s,c)=>s+c.value,0);
+  const pipeline = lobContracts.filter(c=>c.stage!=="Active").reduce((s,c)=>s+c.value,0);
+  const installed = lobOrders.filter(o=>o.status==="Installed").length;
+  const pending = lobOrders.filter(o=>o.status==="Pending").length;
+
+  document.getElementById(containerId).innerHTML = `
+    <div class="lob-header">
+      <div class="lob-title-row">
+        <div class="lob-big-dot" style="width:12px;height:12px;border-radius:50%;background:${cfg.color};box-shadow:0 0 10px ${cfg.color};"></div>
+        <div>
+          <div style="font-family:'JetBrains Mono',monospace;font-weight:900;font-size:20px;letter-spacing:2px;text-transform:uppercase;color:${cfg.color};">${lobName}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:1px;">// LINE OF BUSINESS DASHBOARD</div>
+        </div>
+      </div>
+      <button class="btn" onclick="alert('Demo mode')">+ ADD ACCOUNT</button>
+    </div>
+
+    <div class="metrics-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px;">
+      <div class="metric-card" style="--mc:${cfg.color}"><div class="metric-lbl">Accounts</div><div class="metric-val mono">${lobAccounts.length}</div><div class="metric-sub">Active accounts</div></div>
+      <div class="metric-card" style="--mc:#059669"><div class="metric-lbl">Revenue</div><div class="metric-val mono" style="font-size:16px;">$${revenue.toLocaleString()}</div><div class="metric-sub">Closed contracts</div></div>
+      <div class="metric-card" style="--mc:#D97706"><div class="metric-lbl">Pipeline</div><div class="metric-val mono" style="font-size:16px;">$${pipeline.toLocaleString()}</div><div class="metric-sub">Open opportunities</div></div>
+      <div class="metric-card" style="--mc:#0284C7"><div class="metric-lbl">Installs</div><div class="metric-val mono">${installed}</div><div class="metric-sub">${pending} pending</div></div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;">
+      <div class="card" style="--top-color:${cfg.color}">
+        <div class="card-label">Accounts</div>
+        ${lobAccounts.length === 0 ? `<div class="empty-state">No accounts yet</div>` :
+          lobAccounts.map(a=>`
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;" onclick="showView('accounts');selectAccount(${a.id})">
+              <div><div style="font-weight:600;font-size:12px;color:#0284C7;">${a.name}</div>
+                <div style="font-size:11px;color:var(--muted);">${a.contact} · ${a.city}</div></div>
+              <div class="mono" style="font-size:11px;color:#059669;">$${a.revenue.toLocaleString()}</div>
+            </div>`).join("")}
+      </div>
+      <div class="card" style="--top-color:${cfg.color}">
+        <div class="card-label">Orders</div>
+        ${lobOrders.length === 0 ? `<div class="empty-state">No orders yet</div>` :
+          lobOrders.map(o=>`
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+              <div><div style="font-weight:600;font-size:12px;">${o.accountName}</div>
+                <div style="font-size:11px;color:var(--muted);">${o.installDate}</div></div>
+              <span class="badge ${STATUS_CLASS[o.status]}">${o.status}</span>
+            </div>`).join("")}
+      </div>
+    </div>
+
+    <div class="card" style="--top-color:${cfg.color}">
+      <div class="card-label">Pipeline</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;">
+        ${["Qualify","Propose","Negotiate","Active"].map(stage=>{
+          const cols = lobContracts.filter(c=>c.stage===stage||c.stage===stage.replace("Negotiate","Negotiation"));
+          return `<div style="background:var(--bg);border-radius:6px;padding:10px;">
+            <div style="font-family:'JetBrains Mono',monospace;font-size:9px;font-weight:900;letter-spacing:2px;color:${STAGE_COLORS[stage]};margin-bottom:8px;">${stage.toUpperCase()}</div>
+            ${cols.length===0?`<div style="font-size:11px;color:var(--muted);">Empty</div>`:
+              cols.map(c=>`<div class="kanban-card" style="margin-bottom:6px;">
+                <div style="font-weight:600;font-size:11px;">${c.accountName}</div>
+                <div style="font-size:10px;color:var(--muted);margin:2px 0;">${c.title}</div>
+                <div class="mono" style="font-size:10px;color:#059669;font-weight:700;">$${c.value.toLocaleString()}</div>
+              </div>`).join("")}
+          </div>`;
+        }).join("")}
+      </div>
+    </div>`;
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+renderAccounts(ACCOUNTS);
+renderPipeline();
+renderOrders();
+</script>
+</body>
+</html>
