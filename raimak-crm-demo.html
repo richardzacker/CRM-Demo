@@ -176,15 +176,15 @@
     </div>
     <span class="nav-label" style="margin-top:8px;">Lines of Business</span>
     <div class="nav-item" onclick="showView('lob-frontier')">
-      <span class="lob-dot" style="background:#0284C7;box-shadow:0 0 6px #0284C7;"></span>
+      <span class="lob-dot" style="background:#0284C7;box-shadow:0 0 6px #0284C7;margin-right:8px;"></span>
       <span class="lbl" style="font-size:12px;">Frontier</span>
     </div>
     <div class="nav-item" onclick="showView('lob-kinetic')">
-      <span class="lob-dot" style="background:#059669;box-shadow:0 0 6px #059669;"></span>
+      <span class="lob-dot" style="background:#059669;box-shadow:0 0 6px #059669;margin-right:8px;"></span>
       <span class="lbl" style="font-size:12px;">Kinetic</span>
     </div>
     <div class="nav-item" onclick="showView('lob-verizon')">
-      <span class="lob-dot" style="background:#DC2626;box-shadow:0 0 6px #DC2626;"></span>
+      <span class="lob-dot" style="background:#DC2626;box-shadow:0 0 6px #DC2626;margin-right:8px;"></span>
       <span class="lbl" style="font-size:12px;">Verizon Mobile</span>
     </div>
   </div>
@@ -192,7 +192,7 @@
     <div class="user-avatar">RZ</div>
     <div style="overflow:hidden;">
       <div style="font-size:11px;font-weight:600;color:#F0F6FF;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">Richard Zacker</div>
-      <div style="font-size:10px;color:#93C5DE;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">RichardZacker@raimak.com</div>
+      <div style="font-size:10px;color:#93C5DE;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="15477c767d7467714f74767e70675567747c78747e3b767a78">[email&#160;protected]</a></div>
     </div>
   </div>
 </div>
@@ -318,7 +318,7 @@
 </div><!-- end main -->
 </div><!-- end flex wrapper -->
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
 // ── DEMO DATA ──────────────────────────────────────────────────────────────
 const ACCOUNTS = [
   { id:1, name:"City of Springfield", contact:"Dana Reyes", email:"dana@springfieldil.gov", phone:"217-555-0182", city:"Springfield, IL", revenue:485000, employees:220, lob:["Frontier","Verizon Mobile"],
@@ -826,10 +826,4 @@ function renderLOB(lobName, containerId) {
     </div>`;
 }
 
-// ── INIT ───────────────────────────────────────────────────────────────────
-renderAccounts(ACCOUNTS);
-renderPipeline();
-renderOrders();
-</script>
-</body>
-</html>
+// ── INIT ─────────────────�
